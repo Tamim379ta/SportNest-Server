@@ -5,7 +5,7 @@ dotenv.config()
 
 const app = express()
 const port = process.env.PORT
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = process.env.MONGODB_URI
 
 
@@ -26,18 +26,34 @@ async function run() {
     await client.connect();
 
     const database = client.db('sportnest');
-    const facilityCollaction = database.collection('facility')
+    const facilityCollection = database.collection('facility')
 
     app.post('/all-facilities', async (req, res) => {
       const add = req.body
-      const result = await facilityCollaction.insertOne(add);
+      const result = await facilityCollection.insertOne(add);
       res.json(result)
     })
 
     app.get('/all-facilities', async (req, res) => {
-       const result = await facilityCollaction.find().toArray()
+       const result = await facilityCollection.find().toArray()
        res.json(result);
     })
+
+    app.get('/featured-facilities' , async (req , res) => {
+      const result = await facilityCollection.find().limit(6).toArray()
+      res.json(result)
+    })
+
+    app.get('/all-facilities/:id' , async (req, res)=> {
+      const id = req.params.id
+
+      const query = {
+        _id: new ObjectId(id)
+      }
+
+      const result = await facilityCollection.findOne(query)
+      res.json(result)
+    }) 
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
