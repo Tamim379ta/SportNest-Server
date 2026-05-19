@@ -35,16 +35,16 @@ async function run() {
     })
 
     app.get('/all-facilities', async (req, res) => {
-       const result = await facilityCollection.find().toArray()
-       res.json(result);
+      const result = await facilityCollection.find().toArray()
+      res.json(result);
     })
 
-    app.get('/featured-facilities' , async (req , res) => {
+    app.get('/featured-facilities', async (req, res) => {
       const result = await facilityCollection.find().limit(6).toArray()
       res.json(result)
     })
 
-    app.get('/all-facilities/:id' , async (req, res)=> {
+    app.get('/all-facilities/:id', async (req, res) => {
       const id = req.params.id
 
       const query = {
@@ -53,7 +53,26 @@ async function run() {
 
       const result = await facilityCollection.findOne(query)
       res.json(result)
-    }) 
+    })
+
+    app.patch('/all-facilities/:id', async (req, res) => {
+      const id = req.params.id
+
+      const updateData = req.body
+      const result = await facilityCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updateData }
+      )
+      res.json(result)
+    })
+
+    app.delete( '/all-facilities/:id' , async (req, res) => {
+      const id = req.params.id 
+      const result = await facilityCollection.deleteOne(
+        {_id: new ObjectId(id)}
+      )
+      res.json(result)
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
