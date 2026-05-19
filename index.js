@@ -27,6 +27,18 @@ async function run() {
 
     const database = client.db('sportnest');
     const facilityCollection = database.collection('facility')
+    const bookingCollection = database.collection('booking')
+
+    app.post('/my-bookings' , async (req, res) => {
+      const add = req.body;
+      const result = bookingCollection.insertOne(add);
+      res.json(result)
+    })
+
+    app.get('/my-bookings', async (req, res) => {
+      const result = await bookingCollection.find().toArray();
+      res.json(result)
+    })
 
     app.post('/all-facilities', async (req, res) => {
       const add = req.body
@@ -66,11 +78,16 @@ async function run() {
       res.json(result)
     })
 
-    app.delete( '/all-facilities/:id' , async (req, res) => {
-      const id = req.params.id 
+    app.delete('/all-facilities/:id', async (req, res) => {
+      const id = req.params.id
       const result = await facilityCollection.deleteOne(
-        {_id: new ObjectId(id)}
+        { _id: new ObjectId(id) }
       )
+      res.json(result)
+    })
+
+    app.get('/manage-my-facilities', async (req, res) => {
+      const result = await facilityCollection.find().toArray()
       res.json(result)
     })
 
