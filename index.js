@@ -32,10 +32,10 @@ const middleware = async (req, res, next) => {
     return res.status(401).json({ message: "unauthroized" })
   }
 
-  try{
- const {payload} = await jwtVerify(token, JWKS)
-  next()
-  } catch{
+  try {
+    const { payload } = await jwtVerify(token, JWKS)
+    next()
+  } catch {
     return res.status(403).json({ message: "unauthroized" })
   }
 }
@@ -48,6 +48,35 @@ async function run() {
     const database = client.db('sportnest');
     const facilityCollection = database.collection('facility')
     const bookingCollection = database.collection('booking')
+
+    
+    app.get('/all-facilities', async (req, res) => {
+      const { search, category } = req.query;
+
+      let query = {};
+      const conditions = [];
+
+      if (search) {
+        conditions.push({
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { facility_type: { $regex: search, $options: 'i' } },
+            { location: { $regex: search, $options: 'i' } },
+          ]
+        });
+      }
+
+      if (category) {
+        conditions.push({ facility_type: category });
+      }
+
+      if (conditions.length > 0) {
+        query = conditions.length === 1 ? conditions[0] : { $and: conditions };
+      }
+
+      const result = await facilityCollection.find(query).toArray();
+      res.json(result);
+    });
 
     app.post('/my-bookings', async (req, res) => {
       const add = req.body;
@@ -114,7 +143,7 @@ async function run() {
       res.json(result)
     })
 
-    app.get('/manage-my-facilities',middleware, async (req, res) => {
+    app.get('/manage-my-facilities', middleware, async (req, res) => {
       const result = await facilityCollection.find().toArray()
       res.json(result)
     })
