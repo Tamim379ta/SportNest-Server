@@ -22,7 +22,7 @@ const client = new MongoClient(uri, {
 });
 
 const JWKS = createRemoteJWKSet(
-  new URL(`http://localhost:3000/api/auth/jwks`)
+  new URL(`${process.env.CLIENT_URI}/api/auth/jwks`)
 )
 
 const middleware = async (req, res, next) => {
@@ -49,7 +49,7 @@ async function run() {
     const facilityCollection = database.collection('facility')
     const bookingCollection = database.collection('booking')
 
-    
+
     app.get('/all-facilities', async (req, res) => {
       const { search, category } = req.query;
 
