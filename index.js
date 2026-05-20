@@ -6,6 +6,7 @@ dotenv.config()
 const app = express()
 const port = process.env.PORT
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { jwtVerify, createRemoteJWKSet } = require('jose-cjs')
 const uri = process.env.MONGODB_URI
 
 
@@ -20,6 +21,25 @@ const client = new MongoClient(uri, {
   }
 });
 
+const JWKS = createRemoteJWKSet(
+  new URL(`http://localhost:3000/api/auth/jwks`)
+)
+
+const middleware = async (req, res, next) => {
+  const header = req.headers.authorization;
+  const token = header.split(" ")[1]
+  if (!token) {
+    return res.status(401).json({ message: "unauthroized" })
+  }
+
+  try{
+ const {payload} = await jwtVerify(token, JWKS)
+  next()
+  } catch{
+    return res.status(403).json({ message: "unauthroized" })
+  }
+}
+
 
 async function run() {
   try {
@@ -29,13 +49,13 @@ async function run() {
     const facilityCollection = database.collection('facility')
     const bookingCollection = database.collection('booking')
 
-    app.post('/my-bookings' , async (req, res) => {
+    app.post('/my-bookings', async (req, res) => {
       const add = req.body;
       const result = bookingCollection.insertOne(add);
       res.json(result)
     })
 
-    app.get('/my-bookings', async (req, res) => {
+    app.get('/my-bookings', middleware, async (req, res) => {
       const result = await bookingCollection.find().toArray();
       res.json(result)
     })
@@ -43,12 +63,12 @@ async function run() {
     app.delete('/my-bookings/:id', async (req, res) => {
       const id = req.params.id
       const result = await bookingCollection.deleteOne(
-        {_id: new ObjectId(id)}
+        { _id: new ObjectId(id) }
       )
       res.json(result)
     })
 
-    app.post('/all-facilities', async (req, res) => {
+    app.post('/all-facilities', middleware, async (req, res) => {
       const add = req.body
       const result = await facilityCollection.insertOne(add);
       res.json(result)
@@ -64,7 +84,7 @@ async function run() {
       res.json(result)
     })
 
-    app.get('/all-facilities/:id', async (req, res) => {
+    app.get('/all-facilities/:id', middleware, async (req, res) => {
       const id = req.params.id
 
       const query = {
@@ -94,7 +114,7 @@ async function run() {
       res.json(result)
     })
 
-    app.get('/manage-my-facilities', async (req, res) => {
+    app.get('/manage-my-facilities',middleware, async (req, res) => {
       const result = await facilityCollection.find().toArray()
       res.json(result)
     })
