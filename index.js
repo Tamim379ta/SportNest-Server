@@ -40,6 +40,14 @@ async function run() {
       res.json(result)
     })
 
+    app.delete('/my-bookings/:id', async (req, res) => {
+      const id = req.params.id
+      const result = await bookingCollection.deleteOne(
+        {_id: new ObjectId(id)}
+      )
+      res.json(result)
+    })
+
     app.post('/all-facilities', async (req, res) => {
       const add = req.body
       const result = await facilityCollection.insertOne(add);
